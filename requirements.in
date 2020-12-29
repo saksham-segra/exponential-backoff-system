@@ -1,0 +1,7 @@
+django
+djangorestframework
+django-celery-results
+psycopg2
+celery
+django-environ
+environ

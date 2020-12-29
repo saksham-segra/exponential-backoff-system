@@ -1,0 +1,60 @@
+version: '3.7'
+
+services:
+  db:
+    container_name: postgres_agri
+    image: postgres
+    ports:
+      - "5432:${DB_PORT}"
+    environment:
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_DB: "${DB_NAME}"
+    volumes:
+      - db_data:/var/lib/postgres/data
+    networks:
+      - backend
+
+  web:
+    build: .
+    volumes:
+      - ./agri:/src/agri
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - backend
+
+  celery:
+    build: .
+    command: celery -A agri.celery worker -l info
+    volumes:
+      - ./agri:/src/agri
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    networks:
+      - backend
+
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
+    ports:
+      - "5673:5672"
+    networks:
+      - backend
+
+networks:
+    backend:
+        name: agri_backend_network
+        driver: bridge
+
+volumes:
+  db_data: {}
